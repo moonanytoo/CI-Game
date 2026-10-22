@@ -1,1 +1,522 @@
-<!DOCTYPE html><html lang="th"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>CI Challenge Ultimate</title><style>body{margin:0;font-family:Segoe UI,sans-serif;background:linear-gradient(135deg,#003B7A,#00A3E0);color:white}.container{max-width:900px;margin:auto;padding:30px}.card{background:white;color:#222;padding:25px;border-radius:20px;animation:popup .4s ease}.primary{background:#00A3E0;color:white;width:100%;padding:14px;border:none;border-radius:12px;font-size:16px;cursor:pointer}button{width:100%;margin:8px 0;padding:14px;border:none;border-radius:12px;cursor:pointer;font-size:16px}.secondary{background:#E5E7EB}input{width:100%;padding:12px;border-radius:10px;border:none}.badge{font-size:30px;font-weight:bold}@keyframes popup{from{transform:scale(.8);opacity:0}to{transform:scale(1);opacity:1}}</style></head><body><div class="container" id="app"></div><script>const FLOW_URL='https://default424992fe6af1421590b3fc5eb9c227.b3.environment.api.powerplatform.com:443/powerautomate/automations/direct/cu/20/workflows/ee283027fe704637bce41e8ed06ec781/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=hs_9P2KreWoZCpXGJb-APZw7FBgw3NAFZMcr0eCdzV8';const audioCorrect=new Audio('https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg');const audioWrong=new Audio('https://actions.google.com/sounds/v1/cartoon/cartoon_boing.ogg');const audioTick=new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');const audioClap=new Audio('https://actions.google.com/sounds/v1/crowds/applause.ogg');const questions=[{q:'ขั้นตอนไหนเป็น Waste?',o:['ลูกค้าส่ง Email','Print แล้ว Scan กลับเข้าเครื่อง','รับเรื่อง','อนุมัติ'],a:1},{q:'Prompt ไหนดีที่สุด?',o:['สรุปให้หน่อย','ช่วยดูหน่อย','You are a business analyst. Summarize root cause and actions.','OK'],a:2},{q:'งานใดเหมาะกับ Automation มากที่สุด?',o:['สร้างความสัมพันธ์ลูกค้า','ส่ง Report ทุกวัน','Strategic Decision','Coaching'],a:1},{q:'ควรเริ่มจากอะไร?',o:['ซื้อ AI','ซื้อ RPA','เพิ่มคน','เข้าใจกระบวนการก่อน'],a:3},{q:'แนวคิดที่ถูกต้องคือ?',o:['Lean → AI → Automation','Automation ก่อน','ซื้อ Technology ก่อน','จ้างคนเพิ่ม'],a:0}];let playerName='',current=0,score=0,bestStreak=0,streak=0,timeLeft=15,timer;function getBadge(s){if(s>=150)return '👑 CI Grand Master';if(s>=120)return '🏆 CI Champion';if(s>=90)return '⚡ Automation Builder';if(s>=60)return '🤖 AI Explorer';return '🏭 Lean Explorer';}function home(){app.innerHTML=`<h1>🎮 Escape The Manual Work</h1><div class='card'><input id='playerName' placeholder='ชื่อผู้เล่น'><button class='primary' onclick='startGame()'>▶ Start Mission</button></div>`}function startGame(){playerName=document.getElementById('playerName').value||'Anonymous';current=0;score=0;streak=0;bestStreak=0;showQ()}function showQ(){clearInterval(timer);timeLeft=15;let q=questions[current];app.innerHTML=`<div class='card'><h2>ข้อ ${current+1}</h2><h3>${q.q}</h3>${q.o.map((x,i)=>`<button class='secondary' onclick='answer(${i})'>${x}</button>`).join('')}<p>⏱ <span id=t>${timeLeft}</span></p></div>`;timer=setInterval(()=>{timeLeft--;if(timeLeft<=5&&timeLeft>0){audioTick.currentTime=0;audioTick.play()}let e=document.getElementById('t');if(e)e.textContent=timeLeft;if(timeLeft<=0){clearInterval(timer);next(false)}},1000)}function answer(i){const correct=i===questions[current].a;if(correct){audioCorrect.play()}else{audioWrong.play()}next(correct)}function next(ok){if(ok){streak++;bestStreak=Math.max(bestStreak,streak);score+=20+timeLeft}else{streak=0}current++;current>=questions.length?finishGame():showQ()}async function submitResult(){try{const r=await fetch(FLOW_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({playerName:playerName,score:score,badge:getBadge(score)})});return r.ok}catch(e){return false}}async function finishGame(){audioClap.play();const saved=await submitResult();app.innerHTML=`<div class='card'><h1 style='font-size:42px;color:#00A3E0;text-align:center'>🎉 MISSION COMPLETE 🎉</h1><div class='badge'>${getBadge(score)}</div><h2>Score: ${score}</h2><p>🔥 Best Streak: ${bestStreak}</p><p style='font-weight:bold;color:${saved?'green':'red'}'>${saved?'✅ Score Submitted Successfully':'❌ Score Submit Failed'}</p><button class='secondary' onclick='home()'>🔄 Play Again</button></div>`}home();</script></body></html>
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>CI Challenge Ultimate Edition</title>
+
+<style>
+
+body{
+    margin:0;
+    font-family:'Segoe UI',sans-serif;
+    background:linear-gradient(135deg,#003B7A,#00A3E0);
+    color:white;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+    padding:30px;
+}
+
+.card{
+    background:white;
+    color:#222;
+    padding:25px;
+    border-radius:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,.2);
+    animation:popup .4s ease;
+}
+
+@keyframes popup{
+    from{
+        transform:scale(.8);
+        opacity:0;
+    }
+    to{
+        transform:scale(1);
+        opacity:1;
+    }
+}
+
+input{
+    width:100%;
+    padding:14px;
+    border:none;
+    border-radius:12px;
+    margin-bottom:15px;
+    font-size:16px;
+}
+
+button{
+    width:100%;
+    border:none;
+    padding:14px;
+    border-radius:12px;
+    cursor:pointer;
+    margin:8px 0;
+    font-size:16px;
+    transition:.2s;
+}
+
+button:hover{
+    transform:scale(1.02);
+}
+
+.primary{
+    background:#00A3E0;
+    color:white;
+}
+
+.secondary{
+    background:#E5E7EB;
+}
+
+.badge{
+    font-size:32px;
+    font-weight:bold;
+    text-align:center;
+}
+
+.timer{
+    color:#E11D48;
+    font-weight:bold;
+    font-size:20px;
+}
+
+.correct{
+    color:#16A34A;
+    font-size:22px;
+    text-align:center;
+}
+
+.wrong{
+    color:#DC2626;
+    font-size:22px;
+    text-align:center;
+}
+
+</style>
+</head>
+<body>
+
+<div class="container" id="app"></div>
+
+<script>
+
+const FLOW_URL =
+"https://default424992fe6af1421590b3fc5eb9c227.b3.environment.api.powerplatform.com/powerautomate/automations/direct/cu/20/workflows/ee283027fe704637bce41e8ed06ec781/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=hs_9P2KreWoZCpXGJb-APZw7FBgw3NAFZMcr0eCdzV8";
+
+const audioStart =
+new Audio(
+'https://actions.google.com/sounds/v1/cartoon/concussive_drum_hit.ogg'
+);
+
+const audioCorrect =
+new Audio(
+'https://actions.google.com/sounds/v1/cartoon/magic_chime.ogg'
+);
+
+const audioWrong =
+new Audio(
+'https://actions.google.com/sounds/v1/alarms/digital_watch_alarm_long.ogg'
+);
+
+const audioTick =
+new Audio(
+'https://actions.google.com/sounds/v1/alarms/beep_short.ogg'
+);
+
+const audioClap =
+new Audio(
+'https://actions.google.com/sounds/v1/crowds/applause.ogg'
+);
+
+const questions=[
+{
+q:"ขั้นตอนไหนเป็น Waste?",
+o:[
+"ลูกค้าส่ง Email",
+"Print แล้ว Scan กลับเข้าเครื่อง",
+"รับเรื่อง",
+"อนุมัติ"
+],
+a:1
+},
+{
+q:"Prompt ไหนดีที่สุด?",
+o:[
+"สรุปให้หน่อย",
+"ช่วยดูหน่อย",
+"You are a business analyst. Summarize root cause and actions.",
+"OK"
+],
+a:2
+},
+{
+q:"งานใดเหมาะกับ Automation มากที่สุด?",
+o:[
+"สร้างความสัมพันธ์ลูกค้า",
+"ส่ง Report ทุกวัน",
+"Strategic Decision",
+"Coaching"
+],
+a:1
+},
+{
+q:"ควรเริ่มจากอะไร?",
+o:[
+"ซื้อ AI",
+"ซื้อ RPA",
+"เพิ่มคน",
+"เข้าใจกระบวนการก่อน"
+],
+a:3
+},
+{
+q:"แนวคิดที่ถูกต้องคือ?",
+o:[
+"Lean → AI → Automation",
+"Automation ก่อน",
+"ซื้อ Technology ก่อน",
+"จ้างคนเพิ่ม"
+],
+a:0
+}
+];
+
+let playerName="";
+let current=0;
+let score=0;
+let streak=0;
+let bestStreak=0;
+let timeLeft=15;
+let timer;
+
+function getBadge(score){
+
+if(score>=150)
+return "👑 CI Grand Master";
+
+if(score>=120)
+return "🏆 CI Champion";
+
+if(score>=90)
+return "⚡ Automation Builder";
+
+if(score>=60)
+return "🤖 AI Explorer";
+
+return "🏭 Lean Explorer";
+
+}
+
+function home(){
+
+app.innerHTML=`
+
+<h1>🎮 Escape The Manual Work</h1>
+
+<div class="card">
+
+<input
+id="playerName"
+placeholder="ชื่อผู้เล่น">
+
+<button
+class="primary"
+onclick="startGame()">
+
+▶ Start Mission
+
+</button>
+
+</div>
+
+`;
+
+}
+
+function startGame(){
+
+audioStart.play();
+
+playerName=
+document.getElementById(
+'playerName'
+).value || "Anonymous";
+
+current=0;
+score=0;
+streak=0;
+bestStreak=0;
+
+setTimeout(()=>{
+
+showQuestion();
+
+},500);
+
+}
+
+function showQuestion(){
+
+clearInterval(timer);
+
+timeLeft=15;
+
+const q=
+questions[current];
+
+app.innerHTML=`
+
+<div class="card">
+
+<h2>
+ข้อ ${current+1}
+</h2>
+
+<h3>
+${q.q}
+</h3>
+
+<p>
+Player: <b>${playerName}</b>
+</p>
+
+<p>
+Score: <b>${score}</b>
+</p>
+
+<p class="timer">
+⏱ ${timeLeft}
+</p>
+
+${q.o.map((x,i)=>`
+
+<button
+class="secondary"
+onclick="answer(${i})">
+
+${x}
+
+</button>
+
+`).join("")}
+
+</div>
+
+`;
+
+timer=setInterval(()=>{
+
+timeLeft--;
+
+if(timeLeft<=5 && timeLeft>0){
+
+audioTick.currentTime=0;
+audioTick.play();
+
+}
+
+const t=
+document.querySelector(
+".timer"
+);
+
+if(t){
+
+t.innerHTML=
+`⏱ ${timeLeft}`;
+
+}
+
+if(timeLeft<=0){
+
+clearInterval(timer);
+
+nextQuestion(false);
+
+}
+
+},1000);
+
+}
+
+function answer(i){
+
+const correct =
+i===questions[current].a;
+
+if(correct){
+
+audioCorrect.currentTime=0;
+audioCorrect.play();
+
+}
+else{
+
+audioWrong.currentTime=0;
+audioWrong.play();
+
+}
+
+setTimeout(()=>{
+
+nextQuestion(correct);
+
+},500);
+
+}
+
+function nextQuestion(correct){
+
+if(correct){
+
+streak++;
+
+bestStreak=
+Math.max(
+bestStreak,
+streak
+);
+
+score +=
+20 + timeLeft;
+
+}
+else{
+
+streak=0;
+
+}
+
+current++;
+
+if(
+current>=questions.length
+){
+
+finishGame();
+
+}
+else{
+
+showQuestion();
+
+}
+
+}
+
+async function submitResult(){
+
+try{
+
+const response =
+await fetch(
+FLOW_URL,
+{
+method:"POST",
+headers:{
+"Content-Type":"application/json"
+},
+body:JSON.stringify({
+playerName:playerName,
+score:score,
+badge:getBadge(score)
+})
+}
+);
+
+return response.ok;
+
+}
+catch(e){
+
+return false;
+
+}
+
+}
+
+async function finishGame(){
+
+audioClap.play();
+
+const saved =
+await submitResult();
+
+app.innerHTML=`
+
+<div class="card">
+
+<h1
+style="
+text-align:center;
+color:#00A3E0;
+font-size:40px;
+">
+
+🎉 MISSION COMPLETE 🎉
+
+</h1>
+
+<div class="badge">
+
+${getBadge(score)}
+
+</div>
+
+<h2>
+
+Score : ${score}
+
+</h2>
+
+<p>
+
+🔥 Best Streak :
+${bestStreak}
+
+</p>
+
+<p
+style="
+font-weight:bold;
+color:${
+saved
+? '#16A34A'
+: '#DC2626'
+};
+">
+
+${
+saved
+? '✅ Score Submitted Successfully'
+: '❌ Score Submit Failed'
+}
+
+</p>
+
+<button
+class="secondary"
+onclick="home()">
+
+🔄 Play Again
+
+</button>
+
+</div>
+
+`;
+
+}
+
+home();
+
+</script>
+
+</body>
+</html>
